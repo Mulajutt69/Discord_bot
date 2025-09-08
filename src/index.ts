@@ -1,13 +1,13 @@
-import { Client, GatewayIntentBits, Partials, Guild, Message, GuildMember } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, Guild, Message, GuildMember, PartialMessage } from 'discord.js';
 import dotenv from 'dotenv';
-import { createLogger } from './utils/logger.js';
-import DatabaseManager from './config/database.js';
-import WebSocketManager from './core/WebSocketManager.js';
-import MessageProcessor from './core/MessageProcessor.js';
-import ServerIntelligence from './core/ServerIntelligence.js';
-import BehaviorAnalyzer from './core/BehaviorAnalyzer.js';
-import QueueManager from './core/QueueManager.js';
-import ContextualEngine from './core/ContextualEngine.js';
+import { createLogger } from './utils/logger';
+import DatabaseManager from './config/database';
+import WebSocketManager from './core/WebSocketManager';
+import MessageProcessor from './core/MessageProcessor';
+import ServerIntelligence from './core/ServerIntelligence';
+import BehaviorAnalyzer from './core/BehaviorAnalyzer';
+import QueueManager from './core/QueueManager';
+import ContextualEngine from './core/ContextualEngine';
 
 // Load environment variables
 dotenv.config();
@@ -272,13 +272,16 @@ class DiscordBot {
     }
   }
 
-  async handleMessageUpdate(oldMessage: Message, newMessage: Message) {
+  async handleMessageUpdate(oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage) {
     // Process message edits for behavior analysis
-    if (newMessage.content !== oldMessage.content) {
+    if (newMessage.partial) await newMessage.fetch();
+    if (oldMessage.partial) await oldMessage.fetch();
+    
+    if ((newMessage as Message).content !== (oldMessage as Message).content) {
       logger.debug(`Message edited in ${newMessage.guild?.name}: ${oldMessage.content} -> ${newMessage.content}`);
       
       // This could indicate suspicious behavior if done frequently
-      await this.analyzeMessageEdit(oldMessage, newMessage);
+      await this.analyzeMessageEdit(oldMessage as Message, newMessage as Message);
     }
   }
 
@@ -304,7 +307,7 @@ class DiscordBot {
     await this.analyzeMemberDeparture(member);
   }
 
-  async considerContextualResponse(message) {
+  async considerContextualResponse(message: Message) {
     try {
       const serverProfile = await ServerIntelligence.getServerProfile(message.guild?.id);
       if (!serverProfile) return;
@@ -317,7 +320,7 @@ class DiscordBot {
         content: message.content,
         timestamp: message.createdAt,
         mentions: message.mentions.users.map(user => user.id),
-        isFromModerator: message.member?.permissions.has('MANAGE_MESSAGES') || false
+        isFromModerator: message.member?.permissions.has('ManageMessages') || false
       };
 
       const responseData = await ContextualEngine.generateContextualResponse(messageContext, serverProfile);
@@ -326,7 +329,9 @@ class DiscordBot {
         // Send response with a slight delay to appear natural
         setTimeout(async () => {
           try {
-            await message.channel.send(responseData.response);
+            if (message.channel.isTextBased()) {
+              await message.channel.send(responseData.response);
+            }
             logger.debug(`Sent contextual response in ${message.guild.name}#${message.channel.name}`);
           } catch (error) {
             logger.error('Failed to send contextual response:', error);
@@ -338,7 +343,7 @@ class DiscordBot {
     }
   }
 
-  async handleProcessedMessage(data) {
+  async handleProcessedMessage(data: any) {
     const { context, analysis, messageDoc } = data;
     
     // Trigger behavior analysis if needed
@@ -369,7 +374,7 @@ class DiscordBot {
     });
   }
 
-  async handleSuspiciousBehavior(data) {
+  async handleSuspiciousBehavior(data: any) {
     const { userId, serverId, suspicionScore, riskFactors } = data;
     
     // Notify moderators if suspicion score is very high
@@ -394,9 +399,9 @@ class DiscordBot {
     });
   }
 
-  async notifyModerators(serverId, alert) {
+  async notifyModerators(serverId: string, alert: any) {
     try {
-      const guild = this.client.guilds.cache.get(serverId);
+      const guild = this.client!.guilds.cache.get(serverId);
       if (!guild) return;
 
       // Find moderator channels
@@ -426,7 +431,7 @@ class DiscordBot {
     }
   }
 
-  createServerProcessingThread(serverId) {
+  createServerProcessingThread(serverId: string) {
     // Create dedicated processing context for each server
     this.processingThreads.set(serverId, {
       serverId,
@@ -436,7 +441,7 @@ class DiscordBot {
     });
   }
 
-  removeServerProcessingThread(serverId) {
+  removeServerProcessingThread(serverId: string) {
     this.processingThreads.delete(serverId);
   }
 
@@ -490,7 +495,7 @@ class DiscordBot {
     });
   }
 
-  async analyzeMessageEdit(oldMessage, newMessage) {
+  async analyzeMessageEdit(oldMessage: Message, newMessage: Message) {
     // Track message edits for behavior analysis
     const editData = {
       userId: newMessage.author.id,
@@ -498,21 +503,21 @@ class DiscordBot {
       originalContent: oldMessage.content,
       editedContent: newMessage.content,
       editTime: new Date(),
-      timeSinceOriginal: new Date() - oldMessage.createdAt
+      timeSinceOriginal: new Date().getTime() - oldMessage.createdAt.getTime()
     };
 
     // Frequent edits could indicate bot behavior or spam
     logger.debug('Message edit detected:', editData);
   }
 
-  async analyzeMemberDeparture(member) {
+  async analyzeMemberDeparture(member: GuildMember) {
     // Analyze member departure patterns
     const departureData = {
       userId: member.user.id,
       serverId: member.guild.id,
       joinedAt: member.joinedAt,
       leftAt: new Date(),
-      timeInServer: new Date() - member.joinedAt
+      timeInServer: member.joinedAt ? new Date().getTime() - member.joinedAt.getTime() : 0
     };
 
     // Very short stays could indicate issues

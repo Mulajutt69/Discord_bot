@@ -13,13 +13,22 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/natural": "^5.1.5",
+    "@types/ws": "^8.18.1",
+    "bull": "^4.16.5",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "mongoose": "^8.18.0",
+    "natural": "^8.1.0",
+    "redis": "^5.8.2",
+    "sentiment": "^5.0.2",
+    "winston": "^3.17.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/node": "^20.10.0",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.1",
-    "@types/node": "^20.10.0",
     "typescript": "^5.3.3"
   }
 }
