@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, Guild, Message } from 'discord.js';
 import dotenv from 'dotenv';
 import { createLogger } from './utils/logger.js';
 import DatabaseManager from './config/database.js';
@@ -200,7 +200,7 @@ class DiscordBot {
     logger.info('Server discovery completed');
   }
 
-  async handleNewServer(guild) {
+  async handleNewServer(guild: Guild) {
     try {
       // Create server processing thread
       this.createServerProcessingThread(guild.id);
@@ -229,7 +229,7 @@ class DiscordBot {
     }
   }
 
-  handleServerLeave(guild) {
+  handleServerLeave(guild: Guild) {
     // Clean up server processing thread
     this.removeServerProcessingThread(guild.id);
     
@@ -244,9 +244,9 @@ class DiscordBot {
     });
   }
 
-  async handleMessage(message) {
+  async handleMessage(message: Message) {
     // Skip bot messages for processing but still analyze for patterns
-    if (message.author.bot && message.author.id !== this.client.user.id) {
+    if (message.author.bot && message.author.id !== this.client!.user!.id) {
       return;
     }
 
