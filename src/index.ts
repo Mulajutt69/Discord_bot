@@ -15,6 +15,11 @@ dotenv.config();
 const logger = createLogger('Main');
 
 class DiscordBot {
+  client: Client | null;
+  isReady: boolean;
+  connectedServers: Map<string, any>;
+  processingThreads: Map<string, any>;
+
   constructor() {
     this.client = null;
     this.isReady = false;
