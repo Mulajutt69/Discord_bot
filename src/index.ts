@@ -80,8 +80,8 @@ class DiscordBot {
 
   setupEventListeners() {
     // Bot ready event
-    this.client.once('ready', async () => {
-      logger.info(`Bot logged in as ${this.client.user.tag}`);
+    this.client!.once('ready', async () => {
+      logger.info(`Bot logged in as ${this.client!.user!.tag}`);
       this.isReady = true;
       
       // Discover all connected servers
@@ -90,23 +90,23 @@ class DiscordBot {
       // Set up periodic tasks
       this.setupPeriodicTasks();
       
-      logger.info(`Bot is ready and monitoring ${this.client.guilds.cache.size} servers`);
+      logger.info(`Bot is ready and monitoring ${this.client!.guilds.cache.size} servers`);
     });
 
     // New server joined
-    this.client.on('guildCreate', async (guild) => {
+    this.client!.on('guildCreate', async (guild) => {
       logger.info(`Joined new server: ${guild.name} (${guild.id})`);
       await this.handleNewServer(guild);
     });
 
     // Server left
-    this.client.on('guildDelete', (guild) => {
+    this.client!.on('guildDelete', (guild) => {
       logger.info(`Left server: ${guild.name} (${guild.id})`);
       this.handleServerLeave(guild);
     });
 
     // Message received - main processing entry point
-    this.client.on('messageCreate', async (message) => {
+    this.client!.on('messageCreate', async (message) => {
       if (!this.isReady) return;
       
       try {
@@ -117,7 +117,7 @@ class DiscordBot {
     });
 
     // Message updated
-    this.client.on('messageUpdate', async (oldMessage, newMessage) => {
+    this.client!.on('messageUpdate', async (oldMessage, newMessage) => {
       if (!this.isReady || newMessage.author?.bot) return;
       
       try {
@@ -128,7 +128,7 @@ class DiscordBot {
     });
 
     // Member joined
-    this.client.on('guildMemberAdd', async (member) => {
+    this.client!.on('guildMemberAdd', async (member) => {
       try {
         await this.handleMemberJoin(member);
       } catch (error) {
@@ -137,7 +137,7 @@ class DiscordBot {
     });
 
     // Member left
-    this.client.on('guildMemberRemove', async (member) => {
+    this.client!.on('guildMemberRemove', async (member) => {
       try {
         await this.handleMemberLeave(member);
       } catch (error) {
@@ -146,11 +146,11 @@ class DiscordBot {
     });
 
     // Error handling
-    this.client.on('error', (error) => {
+    this.client!.on('error', (error) => {
       logger.error('Discord client error:', error);
     });
 
-    this.client.on('warn', (warning) => {
+    this.client!.on('warn', (warning) => {
       logger.warn('Discord client warning:', warning);
     });
 
@@ -188,7 +188,7 @@ class DiscordBot {
   async discoverAllServers() {
     logger.info('Discovering all connected servers...');
     
-    const discoveryPromises = this.client.guilds.cache.map(async (guild) => {
+    const discoveryPromises = this.client!.guilds.cache.map(async (guild) => {
       try {
         await this.handleNewServer(guild);
       } catch (error) {
@@ -536,7 +536,7 @@ class DiscordBot {
       
       // Logout from Discord
       if (this.client) {
-        this.client.destroy();
+        this.client!.destroy();
       }
       
       logger.info('Discord Bot shutdown complete');
