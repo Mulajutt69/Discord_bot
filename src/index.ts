@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Partials, Guild, Message } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, Guild, Message, GuildMember } from 'discord.js';
 import dotenv from 'dotenv';
 import { createLogger } from './utils/logger.js';
 import DatabaseManager from './config/database.js';
@@ -272,7 +272,7 @@ class DiscordBot {
     }
   }
 
-  async handleMessageUpdate(oldMessage, newMessage) {
+  async handleMessageUpdate(oldMessage: Message, newMessage: Message) {
     // Process message edits for behavior analysis
     if (newMessage.content !== oldMessage.content) {
       logger.debug(`Message edited in ${newMessage.guild?.name}: ${oldMessage.content} -> ${newMessage.content}`);
@@ -282,7 +282,7 @@ class DiscordBot {
     }
   }
 
-  async handleMemberJoin(member) {
+  async handleMemberJoin(member: GuildMember) {
     logger.info(`New member joined ${member.guild.name}: ${member.user.username}`);
     
     // Initialize behavior tracking for new member
@@ -297,7 +297,7 @@ class DiscordBot {
     });
   }
 
-  async handleMemberLeave(member) {
+  async handleMemberLeave(member: GuildMember) {
     logger.info(`Member left ${member.guild.name}: ${member.user.username}`);
     
     // Analyze departure patterns (could indicate issues)
